@@ -41,10 +41,6 @@ The included `project.binary` is the compiled project settings used by the runti
 ## Credits
 
 - **ZikoZuno** — Zikozythia client development
-- **VROOM** — the friend it was made for
-- **CAPO Games / [Rhythia](https://github.com/Rhythia)** — Sound Space Plus, the base game (MIT)
+- **VROOM** — the friend it was originally made for
+- **CAPO Games / [Rhythia](rhythia.com)**
 - The bloom shader is an original reimplementation of a Rhythia-style glow pipeline written for this client
-
-## License
-
-MIT — see [LICENSE](LICENSE). Sound Space Plus is © CAPO Games, released under the MIT license; this fork keeps the same license.
