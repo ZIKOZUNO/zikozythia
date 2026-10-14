@@ -42,5 +42,4 @@ The included `project.binary` is the compiled project settings used by the runti
 
 - **ZikoZuno** — Zikozythia client development
 - **VROOM** — the friend it was originally made for
-- **CAPO Games / [Rhythia](rhythia.com)**
 - The bloom shader is an original reimplementation of a Rhythia-style glow pipeline written for this client
