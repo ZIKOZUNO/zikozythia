@@ -1,0 +1,9 @@
+# Exported from Godot Engine
+
+newmtl Material
+Kd 1.0 1.0 1.0
+Ks 0.5 0.5 0.5
+
+newmtl Transparent
+Kd 1.0 1.0 1.0
+Ks 0.5 0.5 0.5
