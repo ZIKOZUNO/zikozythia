@@ -198,9 +198,10 @@ func load_pg(select_cur: bool = false):
 
 func _update_window():
 	if disp.size() == 0: return
-	var half = page_size / 2.0
-	var lo = int(floor(scroll_pos - half)) - 1
-	var hi = int(ceil(scroll_pos + half)) + 1
+	# row offset of the centered song, matching the original list layout
+	var mid = int(floor(((page_size + 1) / 2) * 1.2))
+	var lo = int(floor(scroll_pos)) - mid - 1
+	var hi = int(ceil(scroll_pos)) + mid + 1
 
 	for i in range(max(lo, 0), min(hi, disp.size() - 1) + 1):
 		if not cards.has(i):
@@ -213,7 +214,7 @@ func _update_window():
 		var btn = cards[i]
 		var dist = abs(float(i) - scroll_pos)
 		btn.rect_min_size.x = max(size_x - (15.0 * dist), size_x - 260.0)
-		btn.rect_position.y = ((float(i) - scroll_pos + half) * ROW) - 2.0
+		btn.rect_position.y = ((float(i) - scroll_pos + float(mid)) * ROW) - 2.0
 		btn.get_node("Select").pressed = (btn.song == Rhythia.selected_song)
 
 	var kill := []

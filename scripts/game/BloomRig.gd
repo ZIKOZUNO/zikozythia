@@ -108,7 +108,17 @@ func _process(_d):
 			c.far = cam.far
 	_tag_dynamic()
 
-	var texel = Vector2(1.0 / BUFFER_SIZE.x, 1.0 / BUFFER_SIZE.y)
+	# keep the bloom buffers matching the screen aspect so the glow stays
+	# glued to the elements on any display (16:9, 16:10, ultrawide, etc.)
+	var vs = get_viewport().size
+	if vs.x > 1.0 and vs.y > 1.0:
+		var want = Vector2(int(720.0 * float(vs.x) / float(vs.y)), 720)
+		for k in layers:
+			if layers[k]["vp"].size != want:
+				layers[k]["vp"].size = want
+				VisualServer.viewport_set_size(layers[k]["vp"].get_viewport_rid(), int(want.x), int(want.y))
+	var bsz = layers["notes"]["vp"].size
+	var texel = Vector2(1.0 / bsz.x, 1.0 / bsz.y)
 	bloom_mat.set_shader_param("bloom_texel", texel)
 	bloom_mat.set_shader_param("bloom_threshold", Rhythia.bloom_threshold)
 	bloom_mat.set_shader_param("bloom_saturation", Rhythia.bloom_saturation)

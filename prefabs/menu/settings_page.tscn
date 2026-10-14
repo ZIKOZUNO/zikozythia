@@ -1,4 +1,4 @@
-[gd_scene load_steps=97 format=2]
+[gd_scene load_steps=95 format=2]
 
 [ext_resource path="res://uitheme.tres" type="Theme" id=1]
 [ext_resource path="res://assets/font/Lato/Lato-Regular.ttf" type="DynamicFontData" id=2]
@@ -69,9 +69,6 @@
 [ext_resource path="res://scripts/ui/settings/ReplayLimit.gd" type="Script" id=67]
 [ext_resource path="res://scripts/ui/settings/ReplayMode.gd" type="Script" id=68]
 [ext_resource path="res://scripts/ui/settings/BloomSpinBox.gd" type="Script" id=95]
-[ext_resource path="res://scripts/ui/settings/BloomPreview.gd" type="Script" id=100]
-[ext_resource path="res://scripts/ui/settings/OpenOnBloom.gd" type="Script" id=101]
-
 [sub_resource type="StyleBoxLine" id=55]
 color = Color( 0.690196, 0.690196, 0.690196, 0.588235 )
 
@@ -308,7 +305,6 @@ margin_top = 59.0
 margin_right = 1280.0
 margin_bottom = 674.0
 theme = ExtResource( 1 )
-script = ExtResource( 101 )
 tab_align = 0
 
 [node name="Gameplay" type="VBoxContainer" parent="TabContainer"]
@@ -5860,52 +5856,21 @@ rect_min_size = Vector2( 0, 10 )
 custom_constants/separation = 30
 custom_styles/separator = SubResource( 55 )
 
-[node name="Split" type="HBoxContainer" parent="TabContainer/Bloom"]
-anchor_right = 1.0
-margin_top = 30.0
-margin_right = 1280.0
-margin_bottom = 660.0
-custom_constants/separation = 16
-
-[node name="PreviewHolder" type="VBoxContainer" parent="TabContainer/Bloom/Split"]
-margin_left = 710.0
-margin_right = 1280.0
-margin_bottom = 630.0
-size_flags_horizontal = 3
-alignment = 1
-
-[node name="PreviewTitle" type="Label" parent="TabContainer/Bloom/Split/PreviewHolder"]
-margin_left = 30.0
-margin_top = 120.0
-margin_right = 580.0
-margin_bottom = 148.0
-custom_colors/font_color = Color( 0.95, 0.1, 0.15, 1 )
-text = "LIVE PREVIEW"
-align = 1
-
-[node name="Preview" type="Control" parent="TabContainer/Bloom/Split/PreviewHolder"]
-margin_left = 30.0
-margin_top = 160.0
-margin_right = 580.0
-margin_bottom = 469.0
-mouse_filter = 2
-script = ExtResource( 100 )
-
-[node name="Group" type="MarginContainer" parent="TabContainer/Bloom/Split"]
+[node name="Group" type="MarginContainer" parent="TabContainer/Bloom"]
 margin_right = 1280.0
 margin_bottom = 216.0
 mouse_filter = 1
-	custom_constants/margin_left = 30
+	custom_constants/margin_left = 66
 custom_constants/margin_bottom = 12
 
-[node name="H" type="GridContainer" parent="TabContainer/Bloom/Split/Group"]
-	columns = 2
+[node name="H" type="GridContainer" parent="TabContainer/Bloom/Group"]
+	columns = 3
 margin_left = 66.0
 margin_right = 1280.0
 margin_bottom = 204.0
 
 
-[node name="BloomShader" type="CheckBox" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomShader" type="CheckBox" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 334.0
 margin_bottom = 28.0
@@ -5926,13 +5891,13 @@ flat = true
 script = ExtResource( 54 )
 target = "bloom_shader"
 
-[node name="BloomThreshold" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomThreshold" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 0.08] brightness a pixel needs before it starts glowing"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomThreshold"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomThreshold"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -5945,7 +5910,7 @@ value = 0.08
 script = ExtResource( 95 )
 target = "bloom_threshold"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomThreshold"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomThreshold"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -5958,13 +5923,13 @@ text = "Bloom Cutoff"
 align = 2
 valign = 1
 
-[node name="BloomSaturation" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomSaturation" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.2] color intensity of the glow (1 = natural, 0 = white)"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomSaturation"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomSaturation"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -5977,7 +5942,7 @@ value = 1.2
 script = ExtResource( 95 )
 target = "bloom_saturation"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomSaturation"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomSaturation"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -5991,13 +5956,13 @@ align = 2
 valign = 1
 
 
-[node name="BloomNotesStrength" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomNotesStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.5] how strong the glow on notes is"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomNotesStrength"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomNotesStrength"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6010,7 +5975,7 @@ value = 1.5
 script = ExtResource( 95 )
 target = "bloom_notes_strength"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomNotesStrength"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomNotesStrength"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6023,13 +5988,13 @@ text = "Note Glow"
 align = 2
 valign = 1
 
-[node name="BloomNotesRadius" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomNotesRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around notes spreads"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomNotesRadius"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomNotesRadius"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6042,7 +6007,7 @@ value = 5.0
 script = ExtResource( 95 )
 target = "bloom_notes_radius"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomNotesRadius"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomNotesRadius"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6056,13 +6021,13 @@ align = 2
 valign = 1
 
 
-[node name="BloomCursorStrength" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomCursorStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.5] how strong the glow on your cursor and trail is"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomCursorStrength"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomCursorStrength"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6075,7 +6040,7 @@ value = 1.5
 script = ExtResource( 95 )
 target = "bloom_cursor_strength"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomCursorStrength"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomCursorStrength"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6088,13 +6053,13 @@ text = "Cursor Glow"
 align = 2
 valign = 1
 
-[node name="BloomCursorRadius" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomCursorRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around your cursor spreads"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomCursorRadius"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomCursorRadius"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6107,7 +6072,7 @@ value = 5.0
 script = ExtResource( 95 )
 target = "bloom_cursor_radius"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomCursorRadius"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomCursorRadius"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6121,13 +6086,13 @@ align = 2
 valign = 1
 
 
-[node name="BloomBorderStrength" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomBorderStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.5] how strong the glow on the playfield border is"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomBorderStrength"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomBorderStrength"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6140,7 +6105,7 @@ value = 1.5
 script = ExtResource( 95 )
 target = "bloom_border_strength"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomBorderStrength"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBorderStrength"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6153,13 +6118,13 @@ text = "Playfield Glow"
 align = 2
 valign = 1
 
-[node name="BloomBorderRadius" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomBorderRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around the playfield border spreads"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomBorderRadius"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomBorderRadius"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6172,7 +6137,7 @@ value = 5.0
 script = ExtResource( 95 )
 target = "bloom_border_radius"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomBorderRadius"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBorderRadius"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6186,13 +6151,13 @@ align = 2
 valign = 1
 
 
-[node name="BloomBackgroundStrength" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomBackgroundStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1] how strong the glow on background worlds and custom backgrounds is"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomBackgroundStrength"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomBackgroundStrength"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6205,7 +6170,7 @@ value = 1.0
 script = ExtResource( 95 )
 target = "bloom_background_strength"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomBackgroundStrength"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBackgroundStrength"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6218,13 +6183,13 @@ text = "Background Glow"
 align = 2
 valign = 1
 
-[node name="BloomBackgroundRadius" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomBackgroundRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 8] how far the glow around the background spreads"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomBackgroundRadius"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomBackgroundRadius"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6237,7 +6202,7 @@ value = 8.0
 script = ExtResource( 95 )
 target = "bloom_background_radius"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomBackgroundRadius"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBackgroundRadius"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6251,13 +6216,13 @@ align = 2
 valign = 1
 
 
-[node name="BloomWorldStrength" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomWorldStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1] how strong the glow on hit effects and everything else is"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomWorldStrength"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomWorldStrength"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6270,7 +6235,7 @@ value = 1.0
 script = ExtResource( 95 )
 target = "bloom_world_strength"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomWorldStrength"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomWorldStrength"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
@@ -6283,13 +6248,13 @@ text = "Effects Glow"
 align = 2
 valign = 1
 
-[node name="BloomWorldRadius" type="HBoxContainer" parent="TabContainer/Bloom/Split/Group/H"]
+[node name="BloomWorldRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
 margin_right = 330.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around hit effects spreads"
 
-[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Split/Group/H/BloomWorldRadius"]
+[node name="SpinBox" type="SpinBox" parent="TabContainer/Bloom/Group/H/BloomWorldRadius"]
 margin_right = 200.0
 margin_bottom = 32.0
 rect_min_size = Vector2( 200, 32 )
@@ -6302,7 +6267,7 @@ value = 5.0
 script = ExtResource( 95 )
 target = "bloom_world_radius"
 
-[node name="Label" type="Label" parent="TabContainer/Bloom/Split/Group/H/BloomWorldRadius"]
+[node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomWorldRadius"]
 margin_left = 204.0
 margin_top = 6.0
 margin_right = 330.0
