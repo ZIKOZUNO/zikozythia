@@ -55,6 +55,7 @@ var last_drag_pos: Vector2 = Vector2()
 var drag_vel: float = 0.0
 
 var size_x: int = 0
+var heights := {}  # card index -> animated height (selected cards grow)
 
 func is_fav(s: Song): return favorite.has(s)
 
@@ -181,6 +182,7 @@ func load_pg(select_cur: bool = false):
 	page_size = int((get_parent().rect_size.y / 90.0) * 1.5)
 	if page_size % 2 != 0:
 		page_size += 1
+	heights.clear()
 
 	cur_map = clamp(cur_map, 0, disp.size() - 1)
 	target_pos = float(cur_map)
@@ -209,7 +211,14 @@ func _update_window():
 		var btn = cards[i]
 		var dist = abs(float(i) - scroll_pos)
 		btn.rect_min_size.x = max(size_x - (15.0 * dist), size_x - 260.0)
-		btn.rect_position.y = ((float(i) - scroll_pos + float(mid)) * ROW) - 2.0
+		# the selected song grows a little so it's obvious which one is picked
+		var want_h = 96.0 if btn.song == Rhythia.selected_song else 90.0
+		if not heights.has(i):
+			heights[i] = 90.0
+		heights[i] += (want_h - heights[i]) * 0.25
+		var h = heights[i]
+		btn.rect_min_size.y = h
+		btn.rect_position.y = ((float(i) - scroll_pos + float(mid)) * ROW) - 2.0 - ((h - 90.0) * 0.5)
 		btn.get_node("Select").pressed = (btn.song == Rhythia.selected_song)
 
 	var kill := []
@@ -219,6 +228,7 @@ func _update_window():
 	for i in kill:
 		cards[i].queue_free()
 		cards.erase(i)
+		heights.erase(i)
 
 func append_filtering_favorites(to: Array, from: Array):
 	for s in from:
@@ -472,7 +482,7 @@ func _exit_tree():
 	thread.wait_to_finish()
 
 func size_list():
-	size_x = get_viewport_rect().size.x / 2.35
+	size_x = get_viewport_rect().size.x / 2.1
 	$"..".rect_min_size.x = size_x
 
 func _load_covers():

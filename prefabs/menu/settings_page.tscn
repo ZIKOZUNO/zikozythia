@@ -5872,9 +5872,9 @@ margin_bottom = 204.0
 
 [node name="BloomShader" type="CheckBox" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 334.0
+margin_right = 400.0
 margin_bottom = 28.0
-rect_min_size = Vector2( 0, 28 )
+rect_min_size = Vector2( 0, 32 )
 hint_tooltip = "CapoRhythia-style bloom over the 3D world"
 theme = ExtResource( 1 )
 custom_colors/font_color_disabled = Color( 0.95, 0.1, 0.15, 1 )
@@ -5893,7 +5893,7 @@ target = "bloom_shader"
 
 [node name="BloomThreshold" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 0.08] brightness a pixel needs before it starts glowing"
 
@@ -5913,7 +5913,7 @@ target = "bloom_threshold"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomThreshold"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -5925,7 +5925,7 @@ valign = 1
 
 [node name="BloomSaturation" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.2] color intensity of the glow (1 = natural, 0 = white)"
 
@@ -5945,7 +5945,7 @@ target = "bloom_saturation"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomSaturation"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -5958,7 +5958,7 @@ valign = 1
 
 [node name="BloomNotesStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.5] how strong the glow on notes is"
 
@@ -5978,7 +5978,7 @@ target = "bloom_notes_strength"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomNotesStrength"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -5990,7 +5990,7 @@ valign = 1
 
 [node name="BloomNotesRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around notes spreads"
 
@@ -6010,7 +6010,7 @@ target = "bloom_notes_radius"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomNotesRadius"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6023,7 +6023,7 @@ valign = 1
 
 [node name="BloomCursorStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.5] how strong the glow on your cursor and trail is"
 
@@ -6043,7 +6043,7 @@ target = "bloom_cursor_strength"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomCursorStrength"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6055,7 +6055,7 @@ valign = 1
 
 [node name="BloomCursorRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around your cursor spreads"
 
@@ -6075,7 +6075,7 @@ target = "bloom_cursor_radius"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomCursorRadius"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6088,7 +6088,7 @@ valign = 1
 
 [node name="BloomBorderStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1.5] how strong the glow on the playfield border is"
 
@@ -6108,7 +6108,7 @@ target = "bloom_border_strength"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBorderStrength"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6120,7 +6120,7 @@ valign = 1
 
 [node name="BloomBorderRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around the playfield border spreads"
 
@@ -6140,7 +6140,7 @@ target = "bloom_border_radius"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBorderRadius"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6153,7 +6153,7 @@ valign = 1
 
 [node name="BloomBackgroundStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1] how strong the glow on background worlds and custom backgrounds is"
 
@@ -6173,7 +6173,7 @@ target = "bloom_background_strength"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBackgroundStrength"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6185,7 +6185,7 @@ valign = 1
 
 [node name="BloomBackgroundRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 8] how far the glow around the background spreads"
 
@@ -6205,7 +6205,7 @@ target = "bloom_background_radius"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomBackgroundRadius"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6218,7 +6218,7 @@ valign = 1
 
 [node name="BloomWorldStrength" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 1] how strong the glow on hit effects and everything else is"
 
@@ -6238,7 +6238,7 @@ target = "bloom_world_strength"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomWorldStrength"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
@@ -6250,7 +6250,7 @@ valign = 1
 
 [node name="BloomWorldRadius" type="HBoxContainer" parent="TabContainer/Bloom/Group/H"]
 margin_top = 0.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 32.0
 hint_tooltip = "[def. 5] how far the glow around hit effects spreads"
 
@@ -6270,7 +6270,7 @@ target = "bloom_world_radius"
 [node name="Label" type="Label" parent="TabContainer/Bloom/Group/H/BloomWorldRadius"]
 margin_left = 204.0
 margin_top = 6.0
-margin_right = 330.0
+margin_right = 400.0
 margin_bottom = 26.0
 focus_mode = 2
 theme = ExtResource( 1 )
