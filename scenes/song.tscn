@@ -41,19 +41,12 @@ shader_param/lines_velocity = 0.15
 
 [sub_resource type="ShaderMaterial" id=85]
 shader = ExtResource( 56 )
-shader_param/bloom_threshold = 0.08
 shader_param/bloom_saturation = 1.2
-shader_param/bloom_texel = Vector2( 0.002, 0.003 )
 shader_param/notes_strength = 1.5
-shader_param/notes_radius = 5.0
 shader_param/cursor_strength = 1.5
-shader_param/cursor_radius = 5.0
 shader_param/border_strength = 1.5
-shader_param/border_radius = 5.0
 shader_param/background_strength = 1.0
-shader_param/background_radius = 8.0
 shader_param/world_strength = 1.0
-shader_param/world_radius = 5.0
 
 [sub_resource type="BoxShape" id=29]
 extents = Vector3( 40, 40, 1 )

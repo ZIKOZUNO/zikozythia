@@ -1,10 +1,10 @@
 extends Node
 
 # Zikozythia layered bloom rig
-# Builds one low-resolution render buffer per bloom layer (notes, cursor,
-# border, background, effects/world) using camera cull masks, keeps the buffer
-# cameras locked to the active gameplay camera, tags every element into its
-# layer, and feeds the buffers to the composite shader on the Bloom color rect.
+# One render buffer per bloom layer (notes, cursor, border, background,
+# effects) with cull-masked cameras, each blurred through a chain of low-res
+# gaussian passes (3 iterations) so the glow is smooth with no ghost copies,
+# then composited over the screen by the Bloom shader.
 
 const L_WORLD = 1
 const L_NOTES = 2
@@ -12,11 +12,12 @@ const L_CURSOR = 4
 const L_BORDER = 8
 const L_BG = 16
 
-# fixed 16:9 bloom buffers (higher res = smoother glow after upscaling)
-const BUFFER_SIZE = Vector2(1280, 720)
+const BASE_HEIGHT = 720
+const BLUR_DIV = 4
 
 var layers := {}
 var bloom_mat: ShaderMaterial
+var blur_shader: Shader
 
 onready var song = get_parent()
 
@@ -27,6 +28,7 @@ func _ready():
 		set_process(false)
 		return
 	bloom_mat = get_node("../Camera/Bloom").material
+	blur_shader = load("res://assets/shaders/bloom_blur.shader")
 	_build_layer("notes", L_NOTES)
 	_build_layer("cursor", L_CURSOR)
 	_build_layer("border", L_BORDER)
@@ -37,7 +39,7 @@ func _ready():
 func _build_layer(lname: String, mask: int):
 	var vp := Viewport.new()
 	vp.name = "BloomBuf_" + lname
-	vp.size = BUFFER_SIZE
+	vp.size = Vector2(BASE_HEIGHT * 16 / 9, BASE_HEIGHT)
 	vp.render_target_update_mode = Viewport.UPDATE_ALWAYS
 	vp.msaa = Viewport.MSAA_DISABLED
 	vp.hdr = false
@@ -48,7 +50,26 @@ func _build_layer(lname: String, mask: int):
 	vp.add_child(cam)
 	# the song scene is still setting up children during _ready - defer the add
 	song.call_deferred("add_child", vp)
-	layers[lname] = {"vp": vp, "cam": cam}
+
+	var chain := []
+	for j in range(3):
+		var bvp := Viewport.new()
+		bvp.name = "BloomBlur_" + lname + str(j)
+		bvp.size = Vector2(BASE_HEIGHT * 16 / 9 / BLUR_DIV, BASE_HEIGHT / BLUR_DIV)
+		bvp.render_target_update_mode = Viewport.UPDATE_ALWAYS
+		bvp.hdr = false
+		var rect := ColorRect.new()
+		rect.anchor_right = 1.0
+		rect.anchor_bottom = 1.0
+		rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		var mat := ShaderMaterial.new()
+		mat.shader = blur_shader
+		rect.material = mat
+		bvp.add_child(rect)
+		song.call_deferred("add_child", bvp)
+		chain.append({"vp": bvp, "mat": mat})
+
+	layers[lname] = {"vp": vp, "cam": cam, "chain": chain}
 
 func _tag_subtree(n: Node, bits: int):
 	if n is VisualInstance:
@@ -89,6 +110,33 @@ func _tag_dynamic():
 		_tag_subtree(c, L_BG)
 		c.set_meta("bloom_tagged", true)
 
+func _set_chain(k: String, radius: float, threshold: float):
+	var base = layers[k]["vp"]
+	var chain = layers[k]["chain"]
+	# blur buffers are a quarter of the base resolution
+	var bsz = Vector2(max(int(base.size.x / BLUR_DIV), 16), max(int(base.size.y / BLUR_DIV), 16))
+	var texel = Vector2(1.0 / bsz.x, 1.0 / bsz.y)
+	# each pass offsets are clamped relative to the accumulated smoothness,
+	# so the kernel can never get sparse enough to show ghost copies
+	var offsets = [
+		clamp(radius * 0.06, 0.5, 2.0),
+		clamp(radius * 0.12, 1.0, 4.0),
+		clamp(radius * 0.24, 2.0, 8.0)
+	]
+	var prev_tex: Texture = base.get_texture()
+	for j in range(3):
+		var e = chain[j]
+		if e["vp"].size != bsz:
+			e["vp"].size = bsz
+			VisualServer.viewport_set_size(e["vp"].get_viewport_rid(), int(bsz.x), int(bsz.y))
+		e["mat"].set_shader_param("src", prev_tex)
+		e["mat"].set_shader_param("texel", texel)
+		e["mat"].set_shader_param("offset", offsets[j])
+		e["mat"].set_shader_param("threshold", threshold)
+		e["mat"].set_shader_param("threshold_enabled", j == 0)
+		prev_tex = e["vp"].get_texture()
+	return prev_tex
+
 func _process(_d):
 	if layers.empty(): return
 	if not layers["notes"]["vp"].is_inside_tree():
@@ -96,6 +144,8 @@ func _process(_d):
 	var mode = Viewport.UPDATE_ALWAYS if Rhythia.bloom_shader else Viewport.UPDATE_DISABLED
 	for k in layers:
 		layers[k]["vp"].render_target_update_mode = mode
+		for e in layers[k]["chain"]:
+			e["vp"].render_target_update_mode = mode
 	if not Rhythia.bloom_shader: return
 
 	var cam = get_viewport().get_camera()
@@ -108,37 +158,35 @@ func _process(_d):
 			c.far = cam.far
 	_tag_dynamic()
 
-	# keep the bloom buffers matching the screen aspect so the glow stays
-	# glued to the elements on any display (16:9, 16:10, ultrawide, etc.)
+	# keep the buffers matching the screen aspect so the glow stays
+	# aligned with the elements on any display
 	var vs = get_viewport().size
 	if vs.x > 1.0 and vs.y > 1.0:
-		var want = Vector2(int(720.0 * float(vs.x) / float(vs.y)), 720)
+		var want = Vector2(int(BASE_HEIGHT * float(vs.x) / float(vs.y)), BASE_HEIGHT)
 		for k in layers:
 			if layers[k]["vp"].size != want:
 				layers[k]["vp"].size = want
 				VisualServer.viewport_set_size(layers[k]["vp"].get_viewport_rid(), int(want.x), int(want.y))
-	var bsz = layers["notes"]["vp"].size
-	var texel = Vector2(1.0 / bsz.x, 1.0 / bsz.y)
-	bloom_mat.set_shader_param("bloom_texel", texel)
-	bloom_mat.set_shader_param("bloom_threshold", Rhythia.bloom_threshold)
+
 	bloom_mat.set_shader_param("bloom_saturation", Rhythia.bloom_saturation)
 
-	bloom_mat.set_shader_param("notes_tex", layers["notes"]["vp"].get_texture())
+	var final_tex: Texture
+	final_tex = _set_chain("notes", Rhythia.bloom_notes_radius, Rhythia.bloom_threshold)
+	bloom_mat.set_shader_param("notes_tex", final_tex)
 	bloom_mat.set_shader_param("notes_strength", Rhythia.bloom_notes_strength)
-	bloom_mat.set_shader_param("notes_radius", Rhythia.bloom_notes_radius)
 
-	bloom_mat.set_shader_param("cursor_tex", layers["cursor"]["vp"].get_texture())
+	final_tex = _set_chain("cursor", Rhythia.bloom_cursor_radius, Rhythia.bloom_threshold)
+	bloom_mat.set_shader_param("cursor_tex", final_tex)
 	bloom_mat.set_shader_param("cursor_strength", Rhythia.bloom_cursor_strength)
-	bloom_mat.set_shader_param("cursor_radius", Rhythia.bloom_cursor_radius)
 
-	bloom_mat.set_shader_param("border_tex", layers["border"]["vp"].get_texture())
+	final_tex = _set_chain("border", Rhythia.bloom_border_radius, Rhythia.bloom_threshold)
+	bloom_mat.set_shader_param("border_tex", final_tex)
 	bloom_mat.set_shader_param("border_strength", Rhythia.bloom_border_strength)
-	bloom_mat.set_shader_param("border_radius", Rhythia.bloom_border_radius)
 
-	bloom_mat.set_shader_param("background_tex", layers["background"]["vp"].get_texture())
+	final_tex = _set_chain("background", Rhythia.bloom_background_radius, Rhythia.bloom_threshold)
+	bloom_mat.set_shader_param("background_tex", final_tex)
 	bloom_mat.set_shader_param("background_strength", Rhythia.bloom_background_strength)
-	bloom_mat.set_shader_param("background_radius", Rhythia.bloom_background_radius)
 
-	bloom_mat.set_shader_param("world_tex", layers["world"]["vp"].get_texture())
+	final_tex = _set_chain("world", Rhythia.bloom_world_radius, Rhythia.bloom_threshold)
+	bloom_mat.set_shader_param("world_tex", final_tex)
 	bloom_mat.set_shader_param("world_strength", Rhythia.bloom_world_strength)
-	bloom_mat.set_shader_param("world_radius", Rhythia.bloom_world_radius)

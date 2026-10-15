@@ -208,6 +208,7 @@ func _update_window():
 			var btn = make_song_button(i)
 			btn.rect_min_size = Vector2(size_x - 50, 90)
 			add_child(btn)
+			btn.visible = true
 			cards[i] = btn
 
 	for i in cards:
