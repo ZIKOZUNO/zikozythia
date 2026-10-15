@@ -210,14 +210,17 @@ func _update_window():
 	for i in cards:
 		var btn = cards[i]
 		var dist = abs(float(i) - scroll_pos)
-		btn.rect_min_size.x = max(size_x - (15.0 * dist), size_x - 260.0)
+		var w = max(size_x - (15.0 * dist), size_x - 260.0)
 		# the selected song grows a little so it's obvious which one is picked
 		var want_h = 96.0 if btn.song == Rhythia.selected_song else 90.0
 		if not heights.has(i):
 			heights[i] = 90.0
 		heights[i] += (want_h - heights[i]) * 0.25
 		var h = heights[i]
-		btn.rect_min_size.y = h
+		# set the real rect size - a plain Control parent won't stretch the
+		# cards the way the original VBox did
+		btn.rect_min_size = Vector2(w, h)
+		btn.rect_size = Vector2(w, h)
 		btn.rect_position.y = ((float(i) - scroll_pos + float(mid)) * ROW) - 2.0 - ((h - 90.0) * 0.5)
 		btn.get_node("Select").pressed = (btn.song == Rhythia.selected_song)
 
