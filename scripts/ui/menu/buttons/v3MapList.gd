@@ -148,12 +148,6 @@ func _process(delta):
 	scroll_pos = clamp(scroll_pos, 0.0, max_pos)
 	cur_map = int(round(scroll_pos))
 
-	# select the centered song once the scroll settles
-	if not drag_down and abs(target_pos - scroll_pos) < 0.08:
-		var cm = int(round(scroll_pos))
-		if cm >= 0 and cm < disp.size() and disp[cm] != Rhythia.selected_song:
-			Rhythia.select_song(disp[cm])
-
 	pt += delta
 	_update_window()
 
@@ -478,7 +472,7 @@ func _exit_tree():
 	thread.wait_to_finish()
 
 func size_list():
-	size_x = get_viewport_rect().size.x / 2.8
+	size_x = get_viewport_rect().size.x / 2.35
 	$"..".rect_min_size.x = size_x
 
 func _load_covers():
