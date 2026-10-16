@@ -166,6 +166,10 @@ func update_timer(ms: float, canSkip: bool = false):
 var loaded = false
 
 var giving_up: float = 0
+
+# Zikozythia: keybind just-pressed tracking
+var _rk_prev: bool = false
+var _lk_prev: bool = false
 var black_fade_target: bool = true
 var black_fade: float = 1
 var passed: bool = false
@@ -192,6 +196,26 @@ func _process(delta):
 				else: end(Globals.END_GIVEUP)
 		else:
 			giving_up = 0
+
+	# Zikozythia: custom restart / leave keybinds (changeable in settings)
+	var rk: bool = Input.is_key_pressed(Rhythia.restart_key)
+	var lk: bool = Input.is_key_pressed(Rhythia.leave_key)
+	if not ending and not get_tree().paused and not Rhythia.vr:
+		if rk and not _rk_prev:
+			_rk_prev = rk
+			_lk_prev = lk
+			get_tree().reload_current_scene()
+			return
+		elif lk and not _lk_prev:
+			_rk_prev = rk
+			_lk_prev = lk
+			ending = true
+			black_fade_target = true
+			yield(get_tree().create_timer(0.35), "timeout")
+			get_tree().change_scene("res://scenes/loaders/menuload.tscn")
+			return
+	_rk_prev = rk
+	_lk_prev = lk
 	
 	if Rhythia.replaying and Input.is_action_just_pressed("pause"):
 		get_tree().paused = not get_tree().paused
