@@ -193,10 +193,11 @@ func load_pg(select_cur: bool = false):
 
 func _update_window():
 	if disp.size() == 0: return
-	# row offset of the centered song, matching the original list layout
-	var mid = int(floor(((page_size + 1) / 2) * 1.2))
-	var lo = int(floor(scroll_pos)) - mid - 1
-	var hi = int(ceil(scroll_pos)) + mid + 1
+	# the scrolled-to song sits in the vertical CENTER of the list
+	var node_h = max(rect_size.y, 300.0)
+	var half_rows = (node_h / ROW) * 0.5
+	var lo = int(floor(scroll_pos - half_rows)) - 1
+	var hi = int(ceil(scroll_pos + half_rows)) + 1
 
 	for i in range(max(lo, 0), min(hi, disp.size() - 1) + 1):
 		if not cards.has(i):
@@ -214,7 +215,7 @@ func _update_window():
 		# cards the way the original VBox did
 		btn.rect_min_size = Vector2(w, 90.0)
 		btn.rect_size = Vector2(w, 90.0)
-		btn.rect_position.y = ((float(i) - scroll_pos + float(mid)) * ROW) - 2.0
+		btn.rect_position.y = (node_h * 0.5) + ((float(i) - scroll_pos) * ROW) - 45.0
 		btn.get_node("Select").pressed = (btn.song == Rhythia.selected_song)
 
 	var kill := []
