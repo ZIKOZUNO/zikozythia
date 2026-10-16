@@ -13,7 +13,7 @@ const L_BORDER = 8
 const L_BG = 16
 
 const BASE_HEIGHT = 720
-const BLUR_DIV = 4
+const BLUR_DIV = 1
 
 var layers := {}
 var bloom_mat: ShaderMaterial
@@ -52,7 +52,7 @@ func _build_layer(lname: String, mask: int):
 	song.call_deferred("add_child", vp)
 
 	var chain := []
-	for j in range(3):
+	for j in range(4):
 		var bvp := Viewport.new()
 		bvp.name = "BloomBlur_" + lname + str(j)
 		bvp.size = Vector2(BASE_HEIGHT * 16 / 9 / BLUR_DIV, BASE_HEIGHT / BLUR_DIV)
@@ -113,18 +113,19 @@ func _tag_dynamic():
 func _set_chain(k: String, radius: float, threshold: float):
 	var base = layers[k]["vp"]
 	var chain = layers[k]["chain"]
-	# blur buffers are a quarter of the base resolution
+	# blur buffers match the base resolution so the glow is never blocky
 	var bsz = Vector2(max(int(base.size.x / BLUR_DIV), 16), max(int(base.size.y / BLUR_DIV), 16))
 	var texel = Vector2(1.0 / bsz.x, 1.0 / bsz.y)
 	# each pass offsets are clamped relative to the accumulated smoothness,
 	# so the kernel can never get sparse enough to show ghost copies
 	var offsets = [
-		clamp(radius * 0.06, 0.5, 2.0),
-		clamp(radius * 0.12, 1.0, 4.0),
-		clamp(radius * 0.24, 2.0, 8.0)
+		clamp(radius * 0.12, 0.5, 3.0),
+		clamp(radius * 0.25, 1.0, 6.0),
+		clamp(radius * 0.5, 2.0, 12.0),
+		clamp(radius * 1.0, 4.0, 24.0)
 	]
 	var prev_tex: Texture = base.get_texture()
-	for j in range(3):
+	for j in range(4):
 		var e = chain[j]
 		if e["vp"].size != bsz:
 			e["vp"].size = bsz
