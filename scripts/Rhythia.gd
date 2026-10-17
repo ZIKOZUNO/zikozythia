@@ -847,9 +847,6 @@ var bloom_world_radius: float = 5.0
 var restart_key: int = 82
 var leave_key: int = 69
 
-# Zikozythia: date display on the song select screen
-var show_date: bool = true
-
 
 var enable_oldmenu: bool = false
 var disable_update: bool = true
@@ -1451,8 +1448,6 @@ func load_saved_settings(saveFile: String = Globals.p("user://settings.json")):
 			restart_key = int(data.restart_key)
 		if data.has("leave_key"):
 			leave_key = int(data.leave_key)
-		if data.has("show_date"):
-			show_date = data.show_date
 
 
 	elif file.file_exists(Globals.p("user://settings")):
@@ -1862,7 +1857,6 @@ func save_settings(saveFile: String = Globals.p("user://settings.json")):
 			bloom_world_radius = bloom_world_radius, 
 			restart_key = restart_key, 
 			leave_key = leave_key, 
-			show_date = show_date, 
 		}
 
 		file.store_string(JSON.print(data, "\t"))
