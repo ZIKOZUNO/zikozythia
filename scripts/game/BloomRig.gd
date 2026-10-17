@@ -52,7 +52,7 @@ func _build_layer(lname: String, mask: int):
 	song.call_deferred("add_child", vp)
 
 	var chain := []
-	for j in range(4):
+	for j in range(6):
 		var bvp := Viewport.new()
 		bvp.name = "BloomBlur_" + lname + str(j)
 		bvp.size = Vector2(BASE_HEIGHT * 16 / 9 / BLUR_DIV, BASE_HEIGHT / BLUR_DIV)
@@ -117,15 +117,18 @@ func _set_chain(k: String, radius: float, threshold: float):
 	var bsz = Vector2(max(int(base.size.x / BLUR_DIV), 16), max(int(base.size.y / BLUR_DIV), 16))
 	var texel = Vector2(1.0 / bsz.x, 1.0 / bsz.y)
 	# each pass offsets are clamped relative to the accumulated smoothness,
-	# so the kernel can never get sparse enough to show ghost copies
+	# so the kernel can never get sparse enough to show ghost copies.
+	# passes 5 and 6 only engage above radius 50 to grow the glow up to 150
 	var offsets = [
 		clamp(radius * 0.12, 0.5, 3.0),
 		clamp(radius * 0.25, 1.0, 6.0),
 		clamp(radius * 0.5, 2.0, 12.0),
-		clamp(radius * 1.0, 4.0, 24.0)
+		clamp(radius * 1.0, 4.0, 24.0),
+		clamp((radius - 50.0) * 0.3, 0.0, 30.0),
+		clamp((radius - 50.0) * 0.6, 0.0, 60.0)
 	]
 	var prev_tex: Texture = base.get_texture()
-	for j in range(4):
+	for j in range(6):
 		var e = chain[j]
 		if e["vp"].size != bsz:
 			e["vp"].size = bsz

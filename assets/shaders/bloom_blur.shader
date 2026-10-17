@@ -7,7 +7,7 @@ shader_type canvas_item;
 
 uniform sampler2D src : hint_black;
 uniform vec2 texel = vec2(0.004, 0.006);
-uniform float offset : hint_range(0.0, 16.0) = 1.0;
+uniform float offset : hint_range(0.0, 64.0) = 1.0;
 uniform float threshold : hint_range(0.0, 1.0) = 0.08;
 uniform bool threshold_enabled = false;
 
