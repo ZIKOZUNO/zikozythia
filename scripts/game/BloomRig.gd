@@ -13,6 +13,7 @@ const L_BORDER = 8
 const L_BG = 16
 
 const BASE_HEIGHT = 720
+const BLUR_DIV = 3
 const PASSES = 6
 
 var layers := {}
@@ -42,7 +43,9 @@ func _ready():
 func _build_layer(lname: String, mask: int):
 	var vp := Viewport.new()
 	vp.name = "BloomBuf_" + lname
-	vp.size = Vector2(BASE_HEIGHT * 16 / 9, BASE_HEIGHT)
+	# low-res layer buffers: the glow energy spreads into a wide soft halo
+	# instead of stacking as a bright copy on top of the element
+	vp.size = Vector2(BASE_HEIGHT * 16 / 9 / BLUR_DIV, BASE_HEIGHT / BLUR_DIV)
 	vp.render_target_update_mode = Viewport.UPDATE_ALWAYS
 	vp.msaa = Viewport.MSAA_DISABLED
 	vp.hdr = false
@@ -117,16 +120,15 @@ func _update_chain(k: String, radius: float, threshold: float):
 	var chain = layers[k]["chain"]
 	var bsz = layers[k]["vp"].size
 	var texel = Vector2(1.0 / bsz.x, 1.0 / bsz.y)
-	# each pass offsets are clamped relative to the accumulated smoothness,
-	# so the kernel can never get sparse enough to show ghost copies.
-	# passes 5 and 6 only engage above radius 50 to grow the glow up to 150
+	# blur runs at a third of the base resolution so the glow energy spreads
+	# into a wide soft halo; the composite upscales it with bilinear sampling
 	var offsets = [
-		clamp(radius * 0.12, 0.5, 3.0),
-		clamp(radius * 0.25, 1.0, 6.0),
-		clamp(radius * 0.5, 2.0, 12.0),
-		clamp(radius * 1.0, 4.0, 24.0),
-		clamp((radius - 50.0) * 0.3, 0.0, 30.0),
-		clamp((radius - 50.0) * 0.6, 0.0, 60.0)
+		clamp(radius * 0.05, 0.5, 1.0),
+		clamp(radius * 0.1, 1.0, 3.0),
+		clamp(radius * 0.25, 2.0, 6.0),
+		clamp(radius * 0.5, 4.0, 12.0),
+		clamp(radius * 1.0, 8.0, 24.0),
+		clamp(radius * 2.0, 16.0, 48.0)
 	]
 	for j in range(PASSES):
 		var mat = chain[j]
@@ -155,14 +157,15 @@ func _process(_d):
 	_tag_dynamic()
 
 	# keep the buffers matching the screen aspect so the glow stays
-	# aligned with the elements on any display
+	# aligned with the elements on any display (at low res)
 	var vs = get_viewport().size
 	if vs.x > 1.0 and vs.y > 1.0:
-		var want = Vector2(int(BASE_HEIGHT * float(vs.x) / float(vs.y)), BASE_HEIGHT)
+		var want = Vector2(int((BASE_HEIGHT * float(vs.x) / float(vs.y)) / BLUR_DIV), BASE_HEIGHT / BLUR_DIV)
 		for k in layers:
 			if layers[k]["vp"].size != want:
 				layers[k]["vp"].size = want
 				VisualServer.viewport_set_size(layers[k]["vp"].get_viewport_rid(), int(want.x), int(want.y))
+		bloom_mat.set_shader_param("bloom_texel", Vector2(1.0 / want.x, 1.0 / want.y))
 
 	bloom_mat.set_shader_param("bloom_saturation", Rhythia.bloom_saturation)
 

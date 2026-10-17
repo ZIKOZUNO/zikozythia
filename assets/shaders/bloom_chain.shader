@@ -17,7 +17,8 @@ vec3 soft_threshold(vec3 color) {
 	float soft = clamp(brightness - threshold + knee, 0.0, 2.0 * knee);
 	soft = soft * soft / (4.0 * knee);
 	float contribution = max(brightness - threshold, soft) / max(brightness, 0.0001);
-	return color * max(contribution, 0.0) / max(1.0 - threshold, 0.0001);
+	// pure attenuation - never amplifies, so a higher threshold always means less glow
+	return color * clamp(contribution, 0.0, 1.0);
 }
 
 vec3 tap(vec2 uv) {
