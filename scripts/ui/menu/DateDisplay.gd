@@ -1,7 +1,8 @@
 extends Label
 
-# Zikozythia: shows the current date in the top-right of the song select
-# screen only - hidden while playing, in settings, or when disabled.
+# Zikozythia: shows the current date in the bottom-left info corner of the
+# song select screen (beside the version label) - hidden while playing, in
+# settings, or when disabled.
 
 var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]
 var days = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
