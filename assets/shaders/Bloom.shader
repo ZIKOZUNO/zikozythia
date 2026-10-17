@@ -7,6 +7,10 @@
 
 shader_type canvas_item;
 
+// global bloom intensity - keeps the additive glow from washing out the
+// screen; the per-layer strength sliders scale on top of this
+const float BLOOM_INTENSITY = 0.35;
+
 uniform float bloom_saturation : hint_range(0.0, 2.0) = 1.2;
 
 uniform sampler2D notes_tex : hint_black;
@@ -35,35 +39,35 @@ void fragment() {
 	if (notes_strength > 0.0) {
 		vec3 b = texture(notes_tex, vec2(UV.x, 1.0 - UV.y)).rgb;
 		float lum = dot(b, vec3(0.2126, 0.7152, 0.0722));
-		b = mix(vec3(lum), b, bloom_saturation) * notes_strength;
+		b = mix(vec3(lum), b, bloom_saturation) * (notes_strength * BLOOM_INTENSITY);
 		source += b;
 		bloomAmount = max(bloomAmount, max(max(b.r, b.g), b.b));
 	}
 	if (cursor_strength > 0.0) {
 		vec3 b = texture(cursor_tex, vec2(UV.x, 1.0 - UV.y)).rgb;
 		float lum = dot(b, vec3(0.2126, 0.7152, 0.0722));
-		b = mix(vec3(lum), b, bloom_saturation) * cursor_strength;
+		b = mix(vec3(lum), b, bloom_saturation) * (cursor_strength * BLOOM_INTENSITY);
 		source += b;
 		bloomAmount = max(bloomAmount, max(max(b.r, b.g), b.b));
 	}
 	if (border_strength > 0.0) {
 		vec3 b = texture(border_tex, vec2(UV.x, 1.0 - UV.y)).rgb;
 		float lum = dot(b, vec3(0.2126, 0.7152, 0.0722));
-		b = mix(vec3(lum), b, bloom_saturation) * border_strength;
+		b = mix(vec3(lum), b, bloom_saturation) * (border_strength * BLOOM_INTENSITY);
 		source += b;
 		bloomAmount = max(bloomAmount, max(max(b.r, b.g), b.b));
 	}
 	if (background_strength > 0.0) {
 		vec3 b = texture(background_tex, vec2(UV.x, 1.0 - UV.y)).rgb;
 		float lum = dot(b, vec3(0.2126, 0.7152, 0.0722));
-		b = mix(vec3(lum), b, bloom_saturation) * background_strength;
+		b = mix(vec3(lum), b, bloom_saturation) * (background_strength * BLOOM_INTENSITY);
 		source += b;
 		bloomAmount = max(bloomAmount, max(max(b.r, b.g), b.b));
 	}
 	if (world_strength > 0.0) {
 		vec3 b = texture(world_tex, vec2(UV.x, 1.0 - UV.y)).rgb;
 		float lum = dot(b, vec3(0.2126, 0.7152, 0.0722));
-		b = mix(vec3(lum), b, bloom_saturation) * world_strength;
+		b = mix(vec3(lum), b, bloom_saturation) * (world_strength * BLOOM_INTENSITY);
 		source += b;
 		bloomAmount = max(bloomAmount, max(max(b.r, b.g), b.b));
 	}
