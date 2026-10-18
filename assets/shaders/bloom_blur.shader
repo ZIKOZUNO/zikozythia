@@ -7,7 +7,7 @@ shader_type canvas_item;
 
 uniform sampler2D src : hint_black;
 uniform vec2 texel = vec2(0.004, 0.006);
-uniform float offset : hint_range(0.0, 64.0) = 1.0;
+uniform float offset : hint_range(0.0, 16.0) = 1.0;
 uniform float threshold : hint_range(0.0, 1.0) = 0.08;
 uniform bool threshold_enabled = false;
 
@@ -17,8 +17,7 @@ vec3 soft_threshold(vec3 color) {
 	float soft = clamp(brightness - threshold + knee, 0.0, 2.0 * knee);
 	soft = soft * soft / (4.0 * knee);
 	float contribution = max(brightness - threshold, soft) / max(brightness, 0.0001);
-	// pure attenuation - never amplifies, so a higher threshold always means less glow
-	return color * clamp(contribution, 0.0, 1.0);
+	return color * max(contribution, 0.0) / max(1.0 - threshold, 0.0001);
 }
 
 vec3 tap(vec2 uv) {
