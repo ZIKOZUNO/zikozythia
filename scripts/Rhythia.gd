@@ -126,6 +126,9 @@ var replay: Replay
 var replay_path: String = ""
 var was_replay: bool = false
 var replaying: bool = false
+var last_replay_id: String = ""
+var pending_replay_delete: String = ""
+var ui_edit_mode: bool = false
 
 
 var load_target_frame_time: float = 1.0 / 40.0
@@ -478,8 +481,31 @@ func console_cmd_error(body: String):
 	yield(Globals.confirm_prompt, "option_selected")
 	Globals.confirm_prompt.s_back.play()
 	Globals.confirm_prompt.close()
-func update_rpc_song():
+# --- Zikozythia: rich Discord presence ---
+# details = the map/game name (top line), state = the activity (bottom line),
+# elapsed_ms = time to show as "elapsed" in Discord (starts ticking from there)
+func update_rpc(details: String, state: String, elapsed_ms: float = -1):
+	if not ProjectSettings.get_setting("application/config/discord_rpc"): return
+	var activity = Discord.Activity.new()
+	activity.set_type(Discord.ActivityType.Playing)
+	activity.set_state(state)
+	activity.set_details(details)
+	if elapsed_ms >= 0:
+		var stamps = activity.get_timestamps()
+		stamps.set_start(OS.get_unix_time() - int(elapsed_ms / 1000.0))
+	var assets = activity.get_assets()
+	assets.set_large_image("icon-bg")
+	assets.set_large_text("Zikozythia")
+	Discord.activity_manager.update_activity(activity)
+
+func update_rpc_song(elapsed_ms: float = 0):
 	if not ProjectSettings.get_setting("application/config/discord_rpc") or selected_song == null: return
+	if replaying and replay != null and replay.autoplayer:
+		update_rpc(selected_song.name, "Watching autoplay")
+		return
+	if replaying:
+		update_rpc(selected_song.name, "Watching a replay")
+		return
 	var txt = ""
 	var mods = []
 	if mod_nofail: mods.append("Nofail")
@@ -505,7 +531,7 @@ func update_rpc_song():
 	if mod_flashlight: mods.append("Flashlight")
 	if mod_nearsighted: mods.append("Nearsight")
 	if mod_hardrock: mods.append("Hard Rock")
-	if replay.autoplayer: mods.append("Auto")
+	if replay != null and not replaying and replay.autoplayer: mods.append("Auto")
 
 	if mods.size() == 0: txt = "No modifiers"
 	else:
@@ -513,15 +539,7 @@ func update_rpc_song():
 			if i != 0: txt += ", "
 			txt += mods[i]
 
-	var activity = Discord.Activity.new()
-	activity.set_type(Discord.ActivityType.Playing)
-	activity.set_state(txt)
-	activity.set_details(selected_song.name)
-
-	var assets = activity.get_assets()
-	assets.set_large_image("icon-bg")
-
-	Discord.activity_manager.update_activity(activity)
+	update_rpc(selected_song.name, txt, elapsed_ms)
 func get_stream_with_default(path: String, default: AudioStream) -> AudioStream:
 	path = Globals.p(path)
 	var file: File = File.new()
@@ -705,7 +723,7 @@ var edge_drift: float = 0
 var disable_intro: bool = false
 
 
-var record_replays: bool = false
+var record_replays: bool = true
 var alt_cam: bool = false
 var record_limit: int = 0
 var record_mode: int = 1
@@ -905,6 +923,7 @@ func do_pb_check_and_set() -> bool:
 	pb.pauses = song_end_pause_count
 	pb.has_passed = song_end_type == Globals.END_PASS
 	pb.max_combo = song_end_combo
+	if record_replays and last_replay_id != "": pb.replay_id = last_replay_id
 	return selected_song.set_pb_if_better(generate_pb_str(true), pb)
 func get_best():
 	return selected_song.get_pb(generate_pb_str(true))

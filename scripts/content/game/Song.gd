@@ -206,7 +206,7 @@ func load_pbs():
 			return
 		
 		var sv: int = file.get_16()
-		if sv > 3:
+		if sv > 4:
 			print("invalid file version for pb file (%s)" % id)
 			file.close()
 			return
@@ -232,6 +232,9 @@ func load_pbs():
 			if has_combo: pb.max_combo = file.get_16()
 			else: pb.max_combo = - 1
 			
+			if sv >= 4: pb.replay_id = file.get_line()
+			else: pb.replay_id = ""
+			
 			pb_data[s] = pb
 			
 		file.close()
@@ -245,7 +248,7 @@ func save_pbs():
 		print("error writing pb file for %s:  %s" % [id, String(err)])
 		return
 	file.store_buffer(PoolByteArray([83, 83, 43, 112, 66]))
-	file.store_16(3)
+	file.store_16(4)
 	file.store_64(pb_data.size())
 	for k in pb_data.keys():
 		var pb: Dictionary = pb_data[k]
@@ -262,11 +265,34 @@ func save_pbs():
 
 		file.store_16(pb.max_combo)
 		
+		file.store_line(pb.get("replay_id", ""))
+		
 	file.close()
 
 func get_pb(pb_str: String):
 	if not pbs_loaded: load_pbs()
 	return pb_data.get(pb_str, {})
+
+# Zikozythia: the best PB across all mod combos
+# (passed runs first, then the highest accuracy)
+func get_best_pb() -> Dictionary:
+	if not pbs_loaded: load_pbs()
+	var best: Dictionary = {}
+	var best_acc: float = - 1
+	for k in pb_data:
+		var pb: Dictionary = pb_data[k]
+		if pb.total_notes <= 0: continue
+		var acc: float = float(pb.hit_notes) / float(pb.total_notes)
+		if best.empty():
+			best = pb
+			best_acc = acc
+		elif int(pb.has_passed) > int(best.has_passed):
+			best = pb
+			best_acc = acc
+		elif int(pb.has_passed) == int(best.has_passed) and acc > best_acc:
+			best = pb
+			best_acc = acc
+	return best
 
 func is_pb_better(ob: Dictionary, pb: Dictionary):
 	

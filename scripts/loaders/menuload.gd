@@ -23,6 +23,10 @@ func _ready():
 	if Rhythia.was_replay: Rhythia.restore_prev_state()
 	if Rhythia.selected_song: Rhythia.selected_song.discard_notes()
 	Rhythia.replay_path = ""
+	if Rhythia.selected_song:
+		Rhythia.update_rpc(Rhythia.selected_song.name, "Browsing maps")
+	else:
+		Rhythia.update_rpc("Zikozythia", "Browsing maps")
 	$BlackFade.visible = true
 	black_fade = 1
 	$BlackFade.color = Color(0, 0, 0, black_fade)

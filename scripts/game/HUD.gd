@@ -469,6 +469,10 @@ func _ready():
 	
 	songnametxt.text = Rhythia.selected_song.name
 	
+	# Zikozythia: apply the user's saved HUD panel offsets
+	call_deferred("_ui_apply")
+	
+	
 	
 	
 	
@@ -520,3 +524,145 @@ func _ready():
 		ms += "HW: %.0f ms | HB: %.02f m" % [Rhythia.hitwindow_ms, Rhythia.note_hitbox_size]
 	
 	modtxt.text = ms
+
+
+# --- Zikozythia: movable UI (press F7 in a song to edit) ---
+# The HUD panels are Sprite3D units floating around the player, so edit mode
+# lets you drag them in 3D. Offsets are saved to user://ui_layout.json.
+const UI_LAYOUT_PATH: String = "user://ui_layout.json"
+var ui_edit_mode: bool = false
+var ui_offsets: Dictionary = {}
+var ui_drag: Sprite3D = null
+var ui_drag_last: Vector2 = Vector2.ZERO
+var ui_helper: Node = null
+
+func ui_units() -> Array:
+	var out: Array = []
+	for c in get_children():
+		if c is Sprite3D: out.append(c)
+	return out
+
+func _ui_load():
+	var f: File = File.new()
+	if not f.file_exists(UI_LAYOUT_PATH): return
+	if f.open(UI_LAYOUT_PATH, File.READ) != OK: return
+	var data = parse_json(f.get_as_text())
+	f.close()
+	if data == null or not (data is Dictionary): return
+	for c in ui_units():
+		if data.has(c.name):
+			var o: Array = data[c.name]
+			if o.size() == 3:
+				ui_offsets[c.name] = Vector3(float(o[0]), float(o[1]), float(o[2]))
+
+func _ui_apply():
+	if Rhythia.vr: return
+	_ui_load()
+	for c in ui_units():
+		c.set_meta("ui_base_origin", c.global_transform.origin)
+		if ui_offsets.has(c.name):
+			c.global_transform.origin = c.global_transform.origin + ui_offsets[c.name]
+	
+	# edit-mode banner
+	ui_helper = CanvasLayer.new()
+	var l: Label = Label.new()
+	l.text = "UI EDIT - drag a panel to move it | right-click a panel to reset it | F7 to save & exit"
+	l.anchor_left = 0.0
+	l.anchor_right = 1.0
+	l.margin_top = 10.0
+	l.align = Label.ALIGN_CENTER
+	l.set("custom_colors/font_color", Color(1, 1, 0.6))
+	l.set("custom_colors/font_color_shadow", Color(0, 0, 0, 0.8))
+	ui_helper.add_child(l)
+	add_child(ui_helper)
+	ui_helper.visible = false
+
+func _ui_save():
+	var data: Dictionary = {}
+	for k in ui_offsets:
+		var v: Vector3 = ui_offsets[k]
+		data[k] = [v.x, v.y, v.z]
+	var f: File = File.new()
+	if f.open(UI_LAYOUT_PATH, File.WRITE) == OK:
+		f.store_string(to_json(data))
+		f.close()
+
+func _ui_set_edit(on: bool):
+	if Rhythia.vr: return
+	ui_edit_mode = on
+	pause_mode = Node.PAUSE_MODE_PROCESS if on else Node.PAUSE_MODE_STOP
+	get_tree().paused = on
+	if on:
+		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
+		for c in ui_units():
+			if not ui_offsets.has(c.name):
+				ui_offsets[c.name] = Vector3.ZERO
+			c.set_meta("ui_base_origin", c.global_transform.origin)
+		ui_helper.visible = true
+	else:
+		_ui_save()
+		ui_helper.visible = false
+		ui_drag = null
+		if Rhythia.replaying:
+			Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
+		elif Rhythia.absolute_mode:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CONFINED)
+		else:
+			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
+
+func _ui_toggle():
+	_ui_set_edit(not ui_edit_mode)
+
+func _ui_pick(mouse: Vector2) -> Sprite3D:
+	var cam: Camera = get_node("../../Camera")
+	var wpp: float = _ui_world_per_px(cam)
+	var best: Sprite3D = null
+	var best_d: float = 1e18
+	for c in ui_units():
+		if not c.visible: continue
+		var center: Vector2 = cam.unproject_position(c.global_transform.origin)
+		var ts: Vector2 = Vector2(300, 300)
+		if c.texture != null: ts = c.texture.get_size()
+		var gs: Vector3 = c.global_transform.basis.get_scale()
+		var world: Vector2 = ts * c.pixel_size * Vector2(abs(gs.x), abs(gs.y))
+		var scr: Vector2 = world / max(wpp, 0.0001)
+		var rect: Rect2 = Rect2(center - scr * 0.5, scr).grow(24.0)
+		var d: float = cam.global_transform.origin.distance_to(c.global_transform.origin)
+		if rect.has_point(mouse) and d < best_d:
+			best_d = d
+			best = c
+	return best
+
+func _ui_world_per_px(cam: Camera) -> float:
+	var dist: float = cam.global_transform.origin.distance_to(global_transform.origin)
+	return 2.0 * dist * tan(deg2rad(cam.fov) * 0.5) / max(float(cam.get_viewport().size.y), 1.0)
+
+func _unhandled_input(event: InputEvent):
+	if not ui_edit_mode:
+		if event is InputEventKey and event.pressed and not event.echo and event.scancode == KEY_F7 and not Rhythia.vr:
+			_ui_set_edit(true)
+		return
+	if event is InputEventKey and event.pressed and not event.echo and event.scancode == KEY_F7:
+		_ui_set_edit(false)
+		return
+	if event is InputEventMouseButton:
+		var unit: Sprite3D = _ui_pick(event.position)
+		if event.button_index == BUTTON_LEFT:
+			if event.pressed and unit != null:
+				ui_drag = unit
+				ui_drag_last = event.position
+			elif not event.pressed:
+				ui_drag = null
+		elif event.button_index == BUTTON_RIGHT and event.pressed and unit != null:
+			ui_offsets[unit.name] = Vector3.ZERO
+			unit.global_transform.origin = unit.get_meta("ui_base_origin")
+	elif event is InputEventMouseMotion and ui_drag != null:
+		var cam: Camera = get_node("../../Camera")
+		var wpp: float = _ui_world_per_px(cam)
+		var rel: Vector2 = event.position - ui_drag_last
+		ui_drag_last = event.position
+		var right: Vector3 = cam.global_transform.basis.x
+		var up: Vector3 = cam.global_transform.basis.y
+		var dx: Vector3 = (right * (rel.x * wpp)) + (up * (- rel.y * wpp))
+		ui_offsets[ui_drag.name] = ui_offsets[ui_drag.name] + dx
+		ui_drag.global_transform.origin = ui_drag.global_transform.origin + dx

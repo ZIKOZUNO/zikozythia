@@ -380,6 +380,8 @@ func make_song_button(id: int = - 1):
 	btn.get_node("Cloud").visible = map.is_online
 	rbtn.disabled = false
 	rbtn.connect("pressed", self, "on_pressed", [id])
+	var pb: Dictionary = map.get_best_pb()
+	if not pb.empty(): btn.add_child(make_pb_badge(pb))
 	
 	rbtn.action_mode = 1
 	rbtn.connect("button_down", self, "check_drag_on")
@@ -388,6 +390,62 @@ func make_song_button(id: int = - 1):
 	if map == Rhythia.selected_song:
 		btn.get_node("Select").pressed = true
 	return btn
+
+# --- Zikozythia: PB badge on map cards ---
+# Passed runs show their letter grade (same thresholds/colors as the
+# end screen), failed best attempts show how far into the map they got.
+var PB_GRADE_COLORS := {
+	"SS": Color("#ffffff"), 
+	"S": Color("#91fffa"), 
+	"A": Color("#91ff92"), 
+	"B": Color("#e7ffc0"), 
+	"C": Color("#fcf7b3"), 
+	"D": Color("#fcd0b3"), 
+	"F": Color("#ff8282")
+}
+
+var _pb_font: DynamicFont
+func _pb_badge_font() -> DynamicFont:
+	if not _pb_font:
+		_pb_font = DynamicFont.new()
+		_pb_font.font_data = load("res://assets/font/UbuntuMono/Regular.ttf")
+		_pb_font.size = 22
+		_pb_font.outline_size = 4
+		_pb_font.outline_color = Color(0, 0, 0, 0.8)
+	return _pb_font
+
+func make_pb_badge(pb: Dictionary) -> Label:
+	var lbl := Label.new()
+	lbl.name = "PBBadge"
+	lbl.set("custom_fonts/font", _pb_badge_font())
+	lbl.align = Label.ALIGN_CENTER
+	lbl.valign = Label.VALIGN_CENTER
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# top-left of the card, next to the favorite heart - the right edge of
+	# these cards is usually off-screen, so anchor to the visible side
+	lbl.margin_left = 38.0
+	lbl.margin_right = 94.0
+	lbl.margin_top = 2.0
+	lbl.margin_bottom = 34.0
+	var acc: float = float(pb.hit_notes) / float(pb.total_notes)
+	if pb.has_passed:
+		var g: String = "SS" if acc >= 1.0 else pb_grade_for_acc(acc)
+		lbl.text = g
+		lbl.set("custom_colors/font_color", PB_GRADE_COLORS[g])
+	else:
+		var progress: float = float(pb.position) / max(float(pb.length), 1.0)
+		lbl.text = "%d%%" % round(progress * 100)
+		lbl.set("custom_colors/font_color", Color("#ea4aca"))
+	return lbl
+
+func pb_grade_for_acc(acc: float) -> String:
+	if acc >= 0.98: return "S"
+	elif acc >= 0.95: return "A"
+	elif acc >= 0.9: return "B"
+	elif acc >= 0.85: return "C"
+	elif acc >= 0.8: return "D"
+	return "F"
+# ------------------------------------------
 
 func _input(ev: InputEvent):
 	if is_visible_in_tree() and ev is InputEventMouseButton and ev.is_pressed():

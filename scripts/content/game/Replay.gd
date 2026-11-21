@@ -1,6 +1,9 @@
 extends Resource
 class_name Replay
 
+const MoveProfileLib = preload("res://scripts/cursordance/MoveProfile.gd")
+const HumanizedMoverLib = preload("res://scripts/cursordance/Humanized.gd")
+
 const file_sig: PoolByteArray = PoolByteArray([83, 115, 42, 82])
 const current_sv: int = 4
 var debug: bool = OS.has_feature("debug")
@@ -232,7 +235,11 @@ func read_data(from_path: String = ""):
 			debug_txt.autoplayer = true
 			update_debug_text()
 			song = Rhythia.selected_song
-			dance = BouncyDanceMover.new(song)
+			var prof = MoveProfileLib.load_or_build()
+			if prof != null and prof.bursts.size() > 0:
+				dance = HumanizedMoverLib.new(song.read_notes(), prof, song.id)
+			else:
+				dance = BouncyDanceMover.new(song)
 
 
 
@@ -446,6 +453,7 @@ func start_recording(with_song: Song):
 	file.store_32(0)
 	file.store_32(0)
 	recording = true
+	Rhythia.last_replay_id = ""
 	if debug:
 		print("Recording startup took %s usec" % [Globals.comma_sep(OS.get_ticks_usec() - a)])
 
@@ -458,5 +466,6 @@ func end_recording():
 	file.store_32(last_ms)
 	file.store_32(sig_count)
 	file.close()
+	Rhythia.last_replay_id = id
 	if debug:
 		print("Recording end took %s usec. Highest cursor save time was %s usec." % [Globals.comma_sep(OS.get_ticks_usec() - a), max_usec])

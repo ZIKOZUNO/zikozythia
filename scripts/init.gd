@@ -54,18 +54,9 @@ func _ready():
 	Rhythia.is_init = false
 
 	if ProjectSettings.get_setting("application/config/discord_rpc"):
-		var activity = Discord.Activity.new()
-		activity.set_type(Discord.ActivityType.Playing)
-		activity.set_details("Initialization")
-
-		if Rhythia.do_archive_convert: activity.set_state("Mass-converting songs")
-		elif Rhythia.first_init_done: activity.set_state("Reloading content")
-		else: activity.set_state("Starting the game")
-
-		var assets = activity.get_assets()
-		assets.set_large_image("icon-bg")
-
-		Discord.activity_manager.update_activity(activity)
+		if Rhythia.do_archive_convert: Rhythia.update_rpc("Zikozythia", "Mass-converting songs")
+		elif Rhythia.first_init_done: Rhythia.update_rpc("Zikozythia", "Reloading content")
+		else: Rhythia.update_rpc("Zikozythia", "Starting the game")
 
 func _exit_tree():
 	if thread.is_active():

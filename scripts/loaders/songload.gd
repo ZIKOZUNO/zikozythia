@@ -41,6 +41,12 @@ func _ready():
 	Rhythia.pb_snd = Rhythia.get_stream_with_default("user://new_best", Rhythia.def_pb_snd)
 	Rhythia.menu_bgm = Rhythia.get_stream_with_default("user://menu", Rhythia.def_menu_bgm)
 	Rhythia.was_replay = false
+	# Zikozythia: failed runs that weren't saved get their replay cleaned up here
+	if Rhythia.pending_replay_delete != "":
+		var rd: Directory = Directory.new()
+		if rd.open("user://replays") == OK:
+			rd.remove(Rhythia.pending_replay_delete + ".sspre")
+		Rhythia.pending_replay_delete = ""
 
 var result
 var result2

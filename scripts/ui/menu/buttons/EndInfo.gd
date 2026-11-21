@@ -65,6 +65,7 @@ func _process(delta):
 		$LetterGrade2.set("custom_colors/font_color", Color.from_hsv(Rhythia.rainbow_t * 0.1, 0.4, 0.1))
 
 func show_pb(_s = null):
+	if replay_btn != null: replay_btn.visible = false
 	if Rhythia.selected_song != null:
 		var pb = Rhythia.get_best()
 		if pb:
@@ -167,8 +168,56 @@ func _ready():
 		
 		update_letter_grade(float(Rhythia.song_end_hits) / float(Rhythia.song_end_total_notes))
 		$Progress.text = "%s\n%.1f%%" % [Rhythia.song_end_time_str, clamp(Rhythia.song_end_position / Rhythia.song_end_length, 0, 1) * 100]
+		if Rhythia.selected_song:
+			var end_acc: float = float(Rhythia.song_end_hits) / float(max(Rhythia.song_end_total_notes, 1))
+			var end_state: String
+			if Rhythia.was_replay: end_state = "Replay %s" % ("passed" if Rhythia.song_end_type == Globals.END_PASS else "failed")
+			elif Rhythia.song_end_type == Globals.END_PASS: end_state = "Passed - %.2f%%" % (end_acc * 100)
+			else: end_state = "Failed at %s" % Rhythia.song_end_time_str
+			Rhythia.update_rpc(Rhythia.selected_song.name, end_state, Rhythia.song_end_position)
+		_make_replay_btn()
 	else:
 		show_pb()
 	Rhythia.just_ended_song = false
 	var list = $"/root/Menu/Main/Maps/MapRegistry/S/VBoxContainer"
 	list.switch_to_play_screen()
+
+# --- Zikozythia: keep / discard the replay of the run that just ended ---
+# Every play is recorded. Passed runs are kept by default; failed runs are
+# thrown away when you start the next song unless you click "Save Replay".
+var replay_btn: Button
+
+func _make_replay_btn():
+	if replay_btn != null: return
+	if Rhythia.was_replay or not Rhythia.record_replays: return
+	if Rhythia.last_replay_id == "": return
+	if Rhythia.selected_song == null: return
+	replay_btn = Button.new()
+	replay_btn.theme = load("res://uitheme.tres")
+	if Rhythia.song_end_type == Globals.END_PASS:
+		replay_btn.text = "Don't Save Replay"
+	else:
+		replay_btn.text = "Save Replay"
+		Rhythia.pending_replay_delete = Rhythia.last_replay_id
+	replay_btn.anchor_left = 0.0
+	replay_btn.anchor_right = 1.0
+	replay_btn.anchor_top = 1.0
+	replay_btn.anchor_bottom = 1.0
+	replay_btn.margin_left = 8.0
+	replay_btn.margin_right = -8.0
+	replay_btn.margin_top = -36.0
+	replay_btn.margin_bottom = -6.0
+	replay_btn.connect("pressed", self, "_on_replay_btn")
+	add_child(replay_btn)
+
+func _on_replay_btn():
+	var rid: String = Rhythia.last_replay_id
+	if rid != "":
+		var d: Directory = Directory.new()
+		if d.open("user://replays") == OK:
+			d.remove(rid + ".sspre")
+	Rhythia.last_replay_id = ""
+	Rhythia.pending_replay_delete = ""
+	if replay_btn != null:
+		replay_btn.visible = false
+# ------------------------------------------------------------------------
