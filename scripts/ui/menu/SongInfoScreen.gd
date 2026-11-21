@@ -412,7 +412,8 @@ func _toggle_replays_box():
 func _build_replays_box():
 	replays_box = PanelContainer.new()
 	replays_box.theme = load("res://uitheme.tres")
-	replays_box.custom_minimum_size = Vector2(460, 190)
+	replays_box.custom_minimum_size = Vector2(470, 340)
+	replays_box.rect_size = Vector2(470, 340)
 	replays_box.mouse_filter = Control.MOUSE_FILTER_STOP
 	var sc: ScrollContainer = ScrollContainer.new()
 	sc.size_flags_vertical = Control.SIZE_EXPAND | Control.SIZE_FILL
@@ -426,10 +427,8 @@ func _build_replays_box():
 	replays_box.visible = false
 
 # top 5: passed runs first, then highest accuracy, then newest
-func _replay_rank_sort(a: Array, b: Array) -> bool:
-	if a[0] != b[0]: return a[0] > b[0]
-	if a[1] != b[1]: return a[1] > b[1]
-	return a[2] > b[2]
+func _mtime_sort(a: Array, b: Array) -> bool:
+	return int(a[0]) > int(b[0])
 
 func _fill_replays_box():
 	for c in replays_box_list.get_children():
@@ -450,27 +449,24 @@ func _fill_replays_box():
 				if not info.ok:
 					fname = d.get_next()
 					continue
-				var total: int = info.hits + info.misses
-				var acc: float = 0.0
-				if total > 0: acc = float(info.hits) / float(total)
-				files.append([1 if (map.note_count > 0 and info.hits + info.misses >= map.note_count) else 0, acc, d.get_modified_time(full), fname, full, info])
+				files.append([d.get_modified_time(full), fname, full, info])
 			fname = d.get_next()
 		d.list_dir_end()
-	files.sort_custom(self, "_replay_rank_sort")
+	files.sort_custom(self, "_mtime_sort")
 	
-	var shown: int = 0
+	var count: int = 0
 	for fr in files:
-		if shown >= 5: break
-		shown += 1
-		var fname: String = fr[3]
-		var full: String = fr[4]
-		var info: Dictionary = fr[5]
+		count += 1
+		var fname: String = fr[1]
+		var full: String = fr[2]
+		var info: Dictionary = fr[3]
 		var stamp: String = fname.substr(map.id.length() + 1).replace(".sspre", "").replace("_", "  ")
 		var total: int = info.hits + info.misses
-		var acc: float = float(fr[1])
+		var acc: float = 0.0
+		if total > 0: acc = float(info.hits) / float(total) * 100.0
 		var status: String = "failed"
 		if info.gaveup: status = "gave up"
-		if fr[0] == 1: status = "passed"
+		if map.note_count > 0 and info.hits + info.misses >= map.note_count: status = "passed"
 		var star: String = ""
 		if not map.pbs_loaded: map.load_pbs()
 		var rid: String = fname.substr(0, fname.length() - 6)
@@ -479,12 +475,12 @@ func _fill_replays_box():
 				star = "  ★"
 				break
 		var row: Button = Button.new()
-		row.text = "%s   |   %s   |   %.1f%%  (%s/%s)   |   %s%s" % [stamp, info.mods, acc * 100.0, comma_sep(info.hits), comma_sep(total), status, star]
+		row.text = "#%d  %s   |   %s   |   %.1f%%  (%s/%s)   |   %s%s" % [count, stamp, info.mods, acc, comma_sep(info.hits), comma_sep(total), status, star]
 		row.custom_minimum_size = Vector2(0, 30)
 		row.size_flags_horizontal = Control.SIZE_EXPAND | Control.SIZE_FILL
 		row.connect("pressed", self, "_watch_from_box", [full])
 		replays_box_list.add_child(row)
-	if shown == 0:
+	if count == 0:
 		var empty: Label = Label.new()
 		empty.text = "No replays recorded for this map yet."
 		replays_box_list.add_child(empty)

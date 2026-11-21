@@ -158,16 +158,29 @@ static func build() -> Dictionary:
 			if not d.current_is_dir() and fname.get_extension() == "sspre":
 				var full: String = rp + fname
 				if is_valid_replay(full):
-					replays.append(full)
+					replays.append([d.get_modified_time(full), full])
 			fname = d.get_next()
 		d.list_dir_end()
+	
+	# learn from the NEWEST recordings so the profile follows the player as
+	# they improve or change playstyle (manual selection - no sort_custom)
+	var chosen: Array = []
+	for _r in range(min(MAX_REPLAYS, replays.size())):
+		var best_i: int = - 1
+		var best_t: int = - 1
+		for i in range(replays.size()):
+			if chosen.has(i): continue
+			if int(replays[i][0]) > best_t:
+				best_t = int(replays[i][0])
+				best_i = i
+		if best_i == - 1: break
+		chosen.append(best_i)
 	
 	var bursts: Array = []
 	var disp_speeds: Array = []
 	var used: int = 0
-	for r in replays:
-		if used >= MAX_REPLAYS: break
-		var samples: Array = parse_cursor(r)
+	for ci in chosen:
+		var samples: Array = parse_cursor(replays[ci][1])
 		if samples.size() < 8: continue
 		var before: int = bursts.size()
 		extract_bursts(samples, bursts)

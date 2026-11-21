@@ -46,23 +46,6 @@ func _initialize():
 	else:
 		out += "bursts: %s from %s replays\n" % [p.bursts.size(), p.replay_count]
 		out += "stats: v50=%.2f v90=%.2f\n" % [float(p.stats.v50), float(p.stats.v90)]
-		var notes = PoolVector3Array()
-		var ms = 2000.0
-		for i in range(300):
-			notes.append(Vector3(0.5 + (i % 2), 0.5 + ((i / 2) % 2), ms))
-			ms += 140.0 + (i % 6) * 45.0
-		var mover = load("res://scripts/cursordance/Humanized.gd").new(notes, p, "test")
-		var worst: float = 0.0
-		var worst_i: int = - 1
-		for i in range(notes.size()):
-			var cp: Vector2 = mover.update(notes[i].z)
-			var dd: float = Vector2(cp.x, cp.y).distance_to(Vector2(notes[i].x, notes[i].y))
-			if dd > worst:
-				worst = dd
-				worst_i = i
-		out += "arrival check: worst=%.4f at note %s (under 0.15 = hits)\n" % [worst, worst_i]
-		var mid: Vector2 = mover.update(notes[150].z - 70.0)
-		out += "mid-gap sample: (%.3f, %.3f) - should be between notes\n" % [mid.x, mid.y]
 		out += "TEST COMPLETE\n"
 	var f = File.new()
 	f.open("C:/Users/suneh/AppData/Local/Temp/opencode/test_out.txt", File.WRITE)

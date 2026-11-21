@@ -470,7 +470,7 @@ func _ready():
 	songnametxt.text = Rhythia.selected_song.name
 	
 	# Zikozythia: apply the user's saved HUD panel offsets
-	call_deferred("_ui_apply")
+	_ui_load()
 	
 	
 	
@@ -526,21 +526,62 @@ func _ready():
 	modtxt.text = ms
 
 
-# --- Zikozythia: movable UI (press F7 in a song to edit) ---
-# The HUD panels are Sprite3D units floating around the player, so edit mode
-# lets you drag them in 3D. Offsets are saved to user://ui_layout.json.
+# --- Zikozythia: movable / resizable UI (press F7 in a song) ---
+# Panels can be dragged anywhere on the screen and resized independently.
+# A panel that has been customized becomes "screen-anchored": it is glued to
+# its saved screen rectangle every frame, so it stays exactly where you put
+# it no matter what the camera does. Panels you never touch keep their
+# original 3D placement. Layout: user://ui_layout.json
 const UI_LAYOUT_PATH: String = "user://ui_layout.json"
+const UI_DIST: float = 3.0
+const UI_UNITS: Array = ["TimerHud", "LeftHud", "RightHud", "EnergyHud", "ComboHud", "GiveUpHud", "PauseHud", "ConfigHud", "ApproachHud"]
 var ui_edit_mode: bool = false
-var ui_offsets: Dictionary = {}
-var ui_drag: Sprite3D = null
+var ui_rects: Dictionary = {}
+var ui_drag: String = ""
 var ui_drag_last: Vector2 = Vector2.ZERO
 var ui_helper: Node = null
+var ui_overlay_ctl: Control = null
 
-func ui_units() -> Array:
-	var out: Array = []
-	for c in get_children():
-		if c is Sprite3D: out.append(c)
-	return out
+func _ui_unit(uname: String):
+	var n: Node = get_node_or_null(uname)
+	if n == null: n = get_node_or_null("../Spawn/" + uname)
+	if n != null and not (n is Sprite3D): n = null
+	return n
+
+func _ui_active_cam() -> Camera:
+	return get_viewport().get_camera()
+
+func _ui_tex_size(unit: Sprite3D) -> Vector2:
+	if unit.texture != null: return unit.texture.get_size()
+	return Vector2(600, 600)
+
+func _ui_world_per_px(cam: Camera, at: Vector3) -> float:
+	var dist: float = cam.global_transform.origin.distance_to(at)
+	return 2.0 * dist * tan(deg2rad(cam.fov) * 0.5) / max(float(cam.get_viewport().size.y), 1.0)
+
+# the on-screen rectangle a panel currently occupies
+func _ui_screen_rect(unit: Sprite3D) -> Rect2:
+	if ui_rects.has(unit.name): return ui_rects[unit.name]
+	var cam: Camera = _ui_active_cam()
+	var wpp: float = _ui_world_per_px(cam, unit.global_transform.origin)
+	var center: Vector2 = cam.unproject_position(unit.global_transform.origin)
+	var ts: Vector2 = _ui_tex_size(unit)
+	var gs: Vector3 = unit.global_transform.basis.get_scale()
+	var world: Vector2 = ts * unit.pixel_size * Vector2(abs(gs.x), abs(gs.y))
+	var scr: Vector2 = world / max(wpp, 0.0001)
+	return Rect2(center - scr * 0.5, scr)
+
+# glues a panel to its saved screen rectangle (called every frame)
+func _ui_apply_screen(unit: Sprite3D, rect: Rect2):
+	var cam: Camera = _ui_active_cam()
+	var center: Vector2 = rect.position + rect.size * 0.5
+	var origin: Vector3 = cam.project_ray_origin(center) + cam.project_ray_normal(center) * UI_DIST
+	var wpp: float = 2.0 * UI_DIST * tan(deg2rad(cam.fov) * 0.5) / max(float(cam.get_viewport().size.y), 1.0)
+	var ts: Vector2 = _ui_tex_size(unit)
+	var px: float = max(unit.pixel_size, 0.0001)
+	var s: Vector2 = (rect.size * wpp) / (ts * px)
+	unit.global_transform = Transform(Basis(), origin)
+	unit.scale = Vector3(s.x, s.y, 1.0)
 
 func _ui_load():
 	var f: File = File.new()
@@ -549,39 +590,17 @@ func _ui_load():
 	var data = parse_json(f.get_as_text())
 	f.close()
 	if data == null or not (data is Dictionary): return
-	for c in ui_units():
-		if data.has(c.name):
-			var o: Array = data[c.name]
-			if o.size() == 3:
-				ui_offsets[c.name] = Vector3(float(o[0]), float(o[1]), float(o[2]))
-
-func _ui_apply():
-	if Rhythia.vr: return
-	_ui_load()
-	for c in ui_units():
-		c.set_meta("ui_base_origin", c.global_transform.origin)
-		if ui_offsets.has(c.name):
-			c.global_transform.origin = c.global_transform.origin + ui_offsets[c.name]
-	
-	# edit-mode banner
-	ui_helper = CanvasLayer.new()
-	var l: Label = Label.new()
-	l.text = "UI EDIT - drag a panel to move it | right-click a panel to reset it | F7 to save & exit"
-	l.anchor_left = 0.0
-	l.anchor_right = 1.0
-	l.margin_top = 10.0
-	l.align = Label.ALIGN_CENTER
-	l.set("custom_colors/font_color", Color(1, 1, 0.6))
-	l.set("custom_colors/font_color_shadow", Color(0, 0, 0, 0.8))
-	ui_helper.add_child(l)
-	add_child(ui_helper)
-	ui_helper.visible = false
+	if not (data.has("rects") and data.rects is Dictionary): return
+	for k in data.rects:
+		var o: Array = data.rects[k]
+		if o.size() == 4:
+			ui_rects[k] = Rect2(float(o[0]), float(o[1]), float(o[2]), float(o[3]))
 
 func _ui_save():
-	var data: Dictionary = {}
-	for k in ui_offsets:
-		var v: Vector3 = ui_offsets[k]
-		data[k] = [v.x, v.y, v.z]
+	var data: Dictionary = {"rects": {}}
+	for k in ui_rects:
+		var r: Rect2 = ui_rects[k]
+		data.rects[k] = [r.position.x, r.position.y, r.size.x, r.size.y]
 	var f: File = File.new()
 	if f.open(UI_LAYOUT_PATH, File.WRITE) == OK:
 		f.store_string(to_json(data))
@@ -594,15 +613,11 @@ func _ui_set_edit(on: bool):
 	get_tree().paused = on
 	if on:
 		Input.set_mouse_mode(Input.MOUSE_MODE_VISIBLE)
-		for c in ui_units():
-			if not ui_offsets.has(c.name):
-				ui_offsets[c.name] = Vector3.ZERO
-			c.set_meta("ui_base_origin", c.global_transform.origin)
 		ui_helper.visible = true
 	else:
 		_ui_save()
 		ui_helper.visible = false
-		ui_drag = null
+		ui_drag = ""
 		if Rhythia.replaying:
 			Input.set_mouse_mode(Input.MOUSE_MODE_HIDDEN)
 		elif Rhythia.absolute_mode:
@@ -610,59 +625,99 @@ func _ui_set_edit(on: bool):
 		else:
 			Input.set_mouse_mode(Input.MOUSE_MODE_CAPTURED)
 
-func _ui_toggle():
-	_ui_set_edit(not ui_edit_mode)
+func _ui_handle_rect(r: Rect2) -> Rect2:
+	return Rect2(r.position + r.size - Vector2(20, 20), Vector2(20, 20))
 
-func _ui_pick(mouse: Vector2) -> Sprite3D:
-	var cam: Camera = get_node("../../Camera")
-	var wpp: float = _ui_world_per_px(cam)
-	var best: Sprite3D = null
-	var best_d: float = 1e18
-	for c in ui_units():
-		if not c.visible: continue
-		var center: Vector2 = cam.unproject_position(c.global_transform.origin)
-		var ts: Vector2 = Vector2(300, 300)
-		if c.texture != null: ts = c.texture.get_size()
-		var gs: Vector3 = c.global_transform.basis.get_scale()
-		var world: Vector2 = ts * c.pixel_size * Vector2(abs(gs.x), abs(gs.y))
-		var scr: Vector2 = world / max(wpp, 0.0001)
-		var rect: Rect2 = Rect2(center - scr * 0.5, scr).grow(24.0)
-		var d: float = cam.global_transform.origin.distance_to(c.global_transform.origin)
-		if rect.has_point(mouse) and d < best_d:
-			best_d = d
-			best = c
+func _ui_draw_overlay():
+	var f: DynamicFont = load("res://assets/font/debug.tres")
+	if f == null: f = ui_overlay_ctl.get_font("font")
+	for uname in UI_UNITS:
+		var unit: Sprite3D = _ui_unit(uname)
+		if unit == null or not unit.visible: continue
+		var r: Rect2 = _ui_screen_rect(unit)
+		var col: Color = Color(0.3, 1, 1, 0.95) if ui_drag.begins_with(uname) else Color(1, 1, 0.35, 0.6)
+		ui_overlay_ctl.draw_rect(r, Color(col.r, col.g, col.b, 0.10), true)
+		ui_overlay_ctl.draw_rect(r, col, false, 2.0)
+		ui_overlay_ctl.draw_rect(_ui_handle_rect(r), Color(1, 0.35, 0.35, 0.9), false, 2.0)
+		ui_overlay_ctl.draw_string(f, r.position + Vector2(6, 20), uname, Color(1, 1, 1, 0.9))
+
+func _ui_build_helper():
+	if ui_helper != null: return
+	ui_helper = CanvasLayer.new()
+	ui_helper.layer = 50
+	var ctl: Control = Control.new()
+	ctl.anchor_right = 1.0
+	ctl.anchor_bottom = 1.0
+	ctl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	ctl.connect("draw", self, "_ui_draw_overlay")
+	ui_helper.add_child(ctl)
+	ui_overlay_ctl = ctl
+	var banner: Label = Label.new()
+	banner.text = "UI EDIT - drag a panel to move it | drag the red corner to resize | right-click a panel to reset it | F7 to save & exit"
+	banner.anchor_left = 0.0
+	banner.anchor_right = 1.0
+	banner.margin_top = 10.0
+	banner.align = Label.ALIGN_CENTER
+	banner.set("custom_colors/font_color", Color(1, 1, 0.6))
+	banner.set("custom_colors/font_color_shadow", Color(0, 0, 0, 0.8))
+	ui_helper.add_child(banner)
+	add_child(ui_helper)
+	ui_helper.visible = false
+
+func _ui_hit_test(mouse: Vector2) -> String:
+	var best: String = ""
+	var best_area: float = 1e18
+	for uname in UI_UNITS:
+		var unit: Sprite3D = _ui_unit(uname)
+		if unit == null or not unit.visible: continue
+		var r: Rect2 = _ui_screen_rect(unit)
+		if not r.grow(8.0).has_point(mouse): continue
+		var area: float = r.size.x * r.size.y
+		if area < best_area:
+			best_area = area
+			best = uname
+	if best == "": return ""
+	if _ui_handle_rect(_ui_screen_rect(_ui_unit(best))).has_point(mouse):
+		return best + ":resize"
 	return best
 
-func _ui_world_per_px(cam: Camera) -> float:
-	var dist: float = cam.global_transform.origin.distance_to(global_transform.origin)
-	return 2.0 * dist * tan(deg2rad(cam.fov) * 0.5) / max(float(cam.get_viewport().size.y), 1.0)
-
-func _unhandled_input(event: InputEvent):
-	if not ui_edit_mode:
-		if event is InputEventKey and event.pressed and not event.echo and event.scancode == KEY_F7 and not Rhythia.vr:
-			_ui_set_edit(true)
+func _input(event: InputEvent):
+	# F7 works no matter what else consumes input
+	if event is InputEventKey and event.pressed and not event.echo and event.scancode == KEY_F7 and not Rhythia.vr:
+		_ui_set_edit(not ui_edit_mode)
 		return
-	if event is InputEventKey and event.pressed and not event.echo and event.scancode == KEY_F7:
-		_ui_set_edit(false)
-		return
+	if not ui_edit_mode: return
 	if event is InputEventMouseButton:
-		var unit: Sprite3D = _ui_pick(event.position)
+		var mouse: Vector2 = event.position
+		if event.button_index == BUTTON_RIGHT and event.pressed:
+			var hit: String = _ui_hit_test(mouse)
+			if hit != "":
+				ui_rects.erase(hit.split(":")[0])
+				ui_overlay_ctl.update()
+			return
 		if event.button_index == BUTTON_LEFT:
-			if event.pressed and unit != null:
-				ui_drag = unit
-				ui_drag_last = event.position
-			elif not event.pressed:
-				ui_drag = null
-		elif event.button_index == BUTTON_RIGHT and event.pressed and unit != null:
-			ui_offsets[unit.name] = Vector3.ZERO
-			unit.global_transform.origin = unit.get_meta("ui_base_origin")
-	elif event is InputEventMouseMotion and ui_drag != null:
-		var cam: Camera = get_node("../../Camera")
-		var wpp: float = _ui_world_per_px(cam)
-		var rel: Vector2 = event.position - ui_drag_last
+			if event.pressed:
+				var hit: String = _ui_hit_test(mouse)
+				if hit == "": return
+				var uname: String = hit.split(":")[0]
+				if not ui_rects.has(uname):
+					# first touch converts a 3D-placed panel at its current spot
+					ui_rects[uname] = _ui_screen_rect(_ui_unit(uname))
+				ui_drag = hit
+				ui_drag_last = mouse
+			else:
+				ui_drag = ""
+				_ui_save()
+	elif event is InputEventMouseMotion and ui_drag != "":
+		var d: Vector2 = event.position - ui_drag_last
 		ui_drag_last = event.position
-		var right: Vector3 = cam.global_transform.basis.x
-		var up: Vector3 = cam.global_transform.basis.y
-		var dx: Vector3 = (right * (rel.x * wpp)) + (up * (- rel.y * wpp))
-		ui_offsets[ui_drag.name] = ui_offsets[ui_drag.name] + dx
-		ui_drag.global_transform.origin = ui_drag.global_transform.origin + dx
+		var parts: Array = ui_drag.split(":")
+		var r: Rect2 = ui_rects.get(parts[0], Rect2())
+		if parts.size() == 2:
+			r.size = r.size + d
+			if r.size.x < 60.0: r.size.x = 60.0
+			if r.size.y < 40.0: r.size.y = 40.0
+		else:
+			r.position = r.position + d
+		ui_rects[parts[0]] = r
+		ui_overlay_ctl.update()

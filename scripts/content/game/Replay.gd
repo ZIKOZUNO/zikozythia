@@ -236,8 +236,8 @@ func read_data(from_path: String = ""):
 			update_debug_text()
 			song = Rhythia.selected_song
 			var prof = MoveProfileLib.load_or_build()
-			if prof != null and prof.bursts.size() > 0:
-				dance = HumanizedMoverLib.new(song.read_notes(), prof, song.id)
+			if prof != null:
+				dance = HumanizedMoverLib.new(song, prof)
 			else:
 				dance = BouncyDanceMover.new(song)
 
