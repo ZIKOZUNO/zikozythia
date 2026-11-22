@@ -104,44 +104,39 @@ static func _add_burst(samples: Array, a: int, b: int, bursts: Array) -> void:
 	var u: Vector2 = disp / dd
 	var nn: Vector2 = Vector2(- u.y, u.x)
 	
-	# cumulative path length for even resampling
-	var cum: Array = [0.0]
-	var total: float = 0.0
-	for i in range(a + 1, b + 1):
-		total += Vector2(samples[i][1], samples[i][2]).distance_to(Vector2(samples[i - 1][1], samples[i - 1][2]))
-		cum.append(total)
-	if total < 0.001: return
-	
+	# store the RAW samples (evenly picked) in displacement-normalized form.
+	# These are the actual points the player's cursor passed through - no
+	# path-fraction resampling, which collapses fast flicks into one big
+	# time jump and makes the bent path wait at the previous note.
+	var cnt: int = min(14, b - a + 1)
 	var s: PoolRealArray = PoolRealArray()
 	var tf: PoolRealArray = PoolRealArray()
 	var max_along: float = - 1.0
-	var target: int = SHAPE_PTS
-	var pt_i: int = 0
-	for k in range(target):
-		var fpath: float = float(k) / float(target - 1)
-		var want: float = fpath * total
-		while pt_i < cum.size() - 2 and cum[pt_i + 1] < want:
-			pt_i += 1
-		var seg: float = max(cum[pt_i + 1] - cum[pt_i], 0.0001)
-		var fseg: float = clamp((want - cum[pt_i]) / seg, 0.0, 1.0)
-		var p: Vector2 = Vector2(samples[a + pt_i][1], samples[a + pt_i][2]).linear_interpolate(
-			Vector2(samples[a + pt_i + 1][1], samples[a + pt_i + 1][2]), fseg)
+	for k in range(cnt):
+		var si: int = a + int(round(float(k) * float(b - a) / float(cnt - 1)))
+		var p: Vector2 = Vector2(samples[si][1], samples[si][2])
 		var rel: Vector2 = p - start
-		var along: float = rel.dot(u) / dd
-		var perp: float = rel.dot(nn) / dd
+		var along: float = clamp(rel.dot(u) / dd, - 0.15, 1.35)
+		var perp: float = clamp(rel.dot(nn) / dd, - 0.6, 0.6)
 		if along > max_along: max_along = along
-		s.append(clamp(along, - 0.3, 1.4))
-		s.append(clamp(perp, - 0.6, 0.6))
-		var tfk: float = clamp((float(samples[a + pt_i][0]) - float(samples[a][0])) / dur, 0.0, 1.0)
-		tf.append(tfk)
+		s.append(along)
+		s.append(perp)
+		tf.append(clamp((float(samples[si][0]) - float(samples[a][0])) / dur, 0.0, 1.0))
 	
 	# erratic bursts (loops, stutters) would look broken when replayed
 	if max_along > 1.75 or max_along < 0.15: return
 	
+	# anchor both ends exactly onto the notes
+	s[0] = 0.0
+	s[1] = 0.0
+	tf[0] = 0.0
+	s[s.size() - 2] = 1.0
+	tf[tf.size() - 1] = 1.0
+	
 	bursts.append({
 		"t": dur, 
 		"d": dd, 
-		"pl": total, 
+		"pl": dd * 1.2, 
 		"os": max_along, 
 		"s": s, 
 		"tf": tf

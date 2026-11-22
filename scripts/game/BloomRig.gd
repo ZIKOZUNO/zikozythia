@@ -12,7 +12,7 @@ const L_CURSOR = 4
 const L_BORDER = 8
 const L_BG = 16
 
-const BASE_HEIGHT = 720
+const BASE_HEIGHT = 1080
 const BLUR_DIV = 1
 
 var layers := {}

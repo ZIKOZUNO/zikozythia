@@ -40,5 +40,15 @@ void fragment() {
 	c += tap(uv - o);
 	c += tap(uv + vec2(o.x, -o.y));
 	c += tap(uv + vec2(-o.x, o.y));
-	COLOR = vec4(c / 16.0, 1.0);
+	// half-offset taps fill the gaps between samples so the upscale
+	// never shows squares - the kernel stays axis-symmetric (no ellipse)
+	c += tap(uv + vec2(o.x * 0.5, 0.0)) * 2.0;
+	c += tap(uv - vec2(o.x * 0.5, 0.0)) * 2.0;
+	c += tap(uv + vec2(0.0, o.y * 0.5)) * 2.0;
+	c += tap(uv - vec2(0.0, o.y * 0.5)) * 2.0;
+	c += tap(uv + o * 0.5);
+	c += tap(uv - o * 0.5);
+	c += tap(uv + vec2(o.x, -o.y) * 0.5);
+	c += tap(uv + vec2(-o.x, o.y) * 0.5);
+	COLOR = vec4(c / 24.0, 1.0);
 }
